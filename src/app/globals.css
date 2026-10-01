@@ -1,14 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f2f3f1;
-  --foreground: #15191b;
-  --surface: #e7eae7;
-  --muted-foreground: #626a6d;
-  --accent: #386e74;
-  --ink: #0d1113;
-  --cool-blue: #70a3ff;
-  --cool-green: #63c7a7;
+  /* ================================================================
+     CORE CANVAS
+     ================================================================ */
+
+  --background: #e6e0f2;
+  --foreground: #101116;
+
+  /*
+    The main portfolio canvas.
+
+    background, surface and soft-lavender intentionally share
+    one base so light sections read as one continuous environment.
+  */
+--background: #ded6ee;
+--surface: #ded6ee;
+--soft-lavender: #ded6ee;
+
+  --muted-foreground: #656574;
+  --ink: #090a0e;
+
+  /* ================================================================
+     IDENTITY / SIGNAL SYSTEM
+     ================================================================ */
+
+  --accent: #6f5df4;
+
+  --soft-violet: #7c6cf2;
+  --deep-violet: #5141c9;
+  --pale-violet: #dcd7fb;
+
+  --cool-blue: #6d9ee8;
+  --soft-blue: #b8d0f5;
+  --deep-blue: #334f7d;
+
+  --soft-pink: #e86fa8;
+
+  /* ================================================================
+     DEPTH SURFACES
+
+     These are no longer alternate page backgrounds.
+     Use them only for cards, glass layers and local depth.
+     ================================================================ */
+
+--lavender-surface: #d3c8e6;
+--lavender-deep: #c3b5dc;
 }
 
 @theme inline {
@@ -16,16 +53,40 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
   --color-ink: var(--ink);
+
+  --color-accent: var(--accent);
+
+  --color-soft-violet: var(--soft-violet);
+  --color-deep-violet: var(--deep-violet);
+  --color-pale-violet: var(--pale-violet);
+
   --color-cool-blue: var(--cool-blue);
-  --color-cool-green: var(--cool-green);
+  --color-soft-blue: var(--soft-blue);
+  --color-deep-blue: var(--deep-blue);
+
+  --color-soft-pink: var(--soft-pink);
+
+  --color-soft-lavender: var(--soft-lavender);
+  --color-lavender-surface: var(--lavender-surface);
+  --color-lavender-deep: var(--lavender-deep);
+
   --font-sans: Arial, Helvetica, sans-serif;
-  --font-serif: Georgia, Times New Roman, serif;
+  --font-serif: Georgia, "Times New Roman", serif;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* ==================================================================
+   BASE
+   ================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background: var(--background);
@@ -33,14 +94,41 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   text-rendering: optimizeLegibility;
 }
-::selection { background: rgba(56, 110, 116, 0.24); }
-a { text-decoration: none; }
-button, a { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+a {
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ==================================================================
+   SELECTION + FOCUS
+   ================================================================== */
+
+::selection {
+  background: rgba(111, 93, 244, 0.22);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ==================================================================
+   ACCESSIBILITY
+   ================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
