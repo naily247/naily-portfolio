@@ -483,37 +483,6 @@ export function Hero() {
     <div className="relative">
       {/* small system marker */}
 
-<motion.div
-  initial={
-    reduceMotion
-      ? false
-      : {
-          opacity: 0,
-          y: 12,
-        }
-  }
-  animate={{
-    opacity: 1,
-    y: 0,
-  }}
-  transition={{
-    delay: 0.08,
-    duration: 0.55,
-    ease: [0.22, 1, 0.36, 1],
-  }}
-  className="flex items-center gap-3"
->
-  <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-soft-violet sm:text-[11px]">
-    Full-Stack Developer
-  </span>
-
-  <span className="h-px w-7 bg-soft-violet/20" />
-
-  <span className="text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground/55">
-    {siteConfig.location}
-  </span>
-</motion.div>
-
       {/* ======================================================== */}
       {/* SIGNATURE / PEEK EASTER EGG                              */}
       {/* ======================================================== */}
@@ -536,7 +505,7 @@ export function Hero() {
           duration: 0.75,
           ease: [0.22, 1, 0.36, 1],
         }}
-        className="relative -ml-3 mt-5 h-[300px] w-[108%] overflow-visible sm:-ml-6 sm:h-[350px] sm:w-[116%] lg:-ml-14 lg:mt-6 lg:h-[400px] lg:w-[128%]"
+        className="relative -ml-3 mt-5 h-[300px] w-[108%] overflow-visible sm:-ml-6 sm:h-[350px] sm:w-[116%] lg:-ml-14 lg:mt-6 lg:h-[400px] lg:w-[128%] lg:-translate-x-14 lg:-translate-y-12"
       >
         {/* ------------------------------------------------------ */}
         {/* PEEK CHARACTER                                         */}
@@ -859,7 +828,7 @@ export function Hero() {
 {/* ---------------------------------------------------------- */}
 {/* INTERACTIVE POSITIONING STATEMENT                          */}
 {/* ---------------------------------------------------------- */}
-
+<div className="relative lg:translate-y-35">
 <motion.div
   initial={
     reduceMotion
@@ -1172,7 +1141,7 @@ export function Hero() {
   <span className="h-px w-8 bg-gradient-to-r from-soft-violet/25 to-transparent" />
 </div>
 </motion.div>
-
+</div>
       {/* actions */}
 
       <motion.div
@@ -1192,7 +1161,7 @@ export function Hero() {
           delay: 0.38,
           duration: 0.6,
         }}
-        className="mt-7 flex flex-wrap gap-3"
+        className="mt-40 flex flex-wrap gap-3"
       >
 {/* ======================================================== */}
 {/* WORK CTA — MAGNETIC DEPTH                                */}
@@ -1642,6 +1611,79 @@ className="
         ].join(' ')}
       />
     </div>
+
+        {/* ======================================================== */}
+    {/* SOFTWARE ENGINEER — TYPOGRAPHIC DEPTH PLANE              */}
+    {/* Experimental static composition                          */}
+    {/* ======================================================== */}
+
+    <motion.div
+      aria-hidden="true"
+      initial={
+        reduceMotion
+          ? false
+          : {
+              opacity: 0,
+              x: -18,
+            }
+      }
+      animate={{
+        opacity: 1,
+        x: 0,
+      }}
+      transition={{
+        delay: 0.34,
+        duration: 0.9,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      className="
+        pointer-events-none
+        absolute
+        left-[-48%]
+        top-[43%]
+        z-[4]
+        hidden
+        w-[158%]
+        -translate-y-1/2
+        lg:block
+      "
+    >
+      <div
+        className="
+          select-none
+          font-sans
+          text-[clamp(5rem,8.4vw,8.4rem)]
+          font-black
+          uppercase
+          leading-[0.72]
+          tracking-[-0.075em]
+          text-foreground/[0.075]
+        "
+      >
+        <div className="whitespace-nowrap">
+          SOFTWARE
+        </div>
+
+        <div className="ml-[12%] mt-[0.16em] whitespace-nowrap">
+          ENGINEER
+        </div>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className="
+          absolute
+          left-[7%]
+          top-[48%]
+          h-px
+          w-[82%]
+          bg-gradient-to-r
+          from-transparent
+          via-soft-violet/[0.16]
+          to-transparent
+        "
+      />
+    </motion.div>
 
     {/* ======================================================== */}
     {/* BACK SYSTEM — LIVES BEHIND NAILY                         */}
