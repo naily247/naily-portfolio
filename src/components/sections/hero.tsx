@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,10 +13,13 @@ import {
 import {
   AnimatePresence,
   motion,
+  useInView,
   useReducedMotion,
 } from 'motion/react';
 
-import { HeroSystemField } from '@/components/sections/hero/hero-system-field';
+import { LivingEditorial } from '@/components/sections/hero/living-editorial';
+import { ProfessionTypography } from '@/components/sections/hero/profession-typography';
+import { HumanReveal } from '@/components/sections/hero/human-reveal';
 import { Container } from '@/components/ui/container';
 import { siteConfig } from '@/data/site';
 
@@ -30,39 +33,34 @@ type HeroAction =
   | 'work'
   | 'resume'
   | 'github'
-  | null;  
-
-const architectureDetails = {
-  interface: {
-    number: '01',
-    eyebrow: 'Interface',
-    title: 'Product surfaces',
-    description:
-      'The part people see, navigate, and interact with.',
-    meta: 'Interaction · hierarchy · states',
-  },
-
-  backend: {
-    number: '02',
-    eyebrow: 'Application',
-    title: 'Product logic',
-    description:
-      'The services and data flow that make the interface work.',
-    meta: 'APIs · services · data flow',
-  },
-
-  systems: {
-    number: '03',
-    eyebrow: 'Connected system',
-    title: 'The pieces working together',
-    description:
-      'How interface, application logic, and data connect as one product.',
-    meta: 'Architecture · state · reliability',
-  },
-} as const;
+  | null;
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
+
+  const heroRef = useRef<HTMLElement>(null);
+  const heroVisible = useInView(heroRef, {
+    amount: 0.3,
+    once: false,
+  });
+
+const [professionSignal, setProfessionSignal] = useState(false);
+
+const igniteProfessionSignal = useCallback(() => {
+  if (reduceMotion) return;
+
+  setProfessionSignal(true);
+}, [reduceMotion]);
+
+useEffect(() => {
+  if (!professionSignal) return;
+
+  const timer = window.setTimeout(() => {
+    setProfessionSignal(false);
+  }, 1100);
+
+  return () => window.clearTimeout(timer);
+}, [professionSignal]);
 
   const [activeLayer, setActiveLayer] =
     useState<ArchitectureLayer>(null);
@@ -73,27 +71,43 @@ export function Hero() {
       y: 50,
       active: false,
     });
+const [humanPreview, setHumanPreview] = useState(false);
+const [humanLocked, setHumanLocked] = useState(false);
 
-  const [peekActive, setPeekActive] =
-    useState(false);
+const humanVisible = humanPreview || humanLocked;
 
-  const [peekPointer, setPeekPointer] =
-    useState({
-      x: 0,
-      y: 0,
-    });
+useEffect(() => {
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setHumanLocked(false);
+      setHumanPreview(false);
+    }
+  };
+
+  window.addEventListener('keydown', handleEscape);
+
+  return () => {
+    window.removeEventListener('keydown', handleEscape);
+  };
+}, []);
 
   const [activeAction, setActiveAction] =
-  useState<HeroAction>(null);  
+  useState<HeroAction>(null);
 
-  const activeArchitecture =
-    activeLayer !== null
-      ? architectureDetails[activeLayer]
-      : null;
+const professionDriftX =
+  reduceMotion || !signalPointer.active
+    ? 0
+    : ((signalPointer.x - 50) / 50) * 5;
 
-  return (
+const professionDriftY =
+  reduceMotion || !signalPointer.active
+    ? 0
+    : ((signalPointer.y - 50) / 50) * 2;
+
+return (
     <section
-      className="relative min-h-screen overflow-hidden bg-soft-lavender py-20 sm:py-24 lg:flex lg:items-center lg:py-20"
+      ref={heroRef}
+      className="relative min-h-screen overflow-hidden bg-soft-lavender py-20 sm:py-24 lg:py-20"
       onPointerMove={(event) => {
         if (reduceMotion) return;
 
@@ -266,6 +280,73 @@ export function Hero() {
     </defs>
 
     {/* quiet line entering the spatial system */}
+
+    {/* Upper identity-to-system connection */}
+    <motion.path
+      d="M 570 280 C 690 265, 760 220, 870 235 C 945 245, 1010 275, 1090 250"
+      fill="none"
+      stroke="url(#hero-global-route)"
+      strokeWidth="0.85"
+      strokeLinecap="round"
+      strokeDasharray="3 9"
+      initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+animate={{
+  pathLength: 1,
+  opacity: professionSignal
+    ? 0.95
+    : activeLayer !== null
+      ? 0.65
+      : 0.38,
+  strokeWidth: professionSignal ? 1.8 : 0.85,
+}}
+      transition={{
+        pathLength: {
+          duration: reduceMotion ? 0 : 1.8,
+          delay: reduceMotion ? 0 : 0.7,
+          ease: [0.22, 1, 0.36, 1],
+        },
+        opacity: { duration: 0.4 },
+      }}
+    />
+    {/* Violet signal released by the completed typography */}
+<motion.circle
+  cx="0"
+  cy="0"
+  r="3"
+  fill="#c5adff"
+  style={{
+    offsetPath:
+      'path("M 570 280 C 690 265, 760 220, 870 235 C 945 245, 1010 275, 1090 250")',
+    offsetRotate: '0deg',
+    filter: 'drop-shadow(0 0 6px rgba(143,102,255,0.95))',
+  }}
+  initial={false}
+  animate={{
+    offsetDistance: professionSignal ? '100%' : '0%',
+    opacity: professionSignal && !reduceMotion ? [0, 1, 1, 0] : 0,
+  }}
+  transition={{
+    duration: 1.05,
+    ease: 'easeInOut',
+  }}
+/>
+
+    <motion.circle
+      cx="870"
+      cy="235"
+      r="2.5"
+      fill="#7c6cf2"
+      animate={{
+        opacity: reduceMotion ? 0.3 : [0.15, 0.5, 0.15],
+        scale: reduceMotion ? 1 : [1, 1.3, 1],
+      }}
+      transition={{
+        duration: 3.6,
+        repeat: reduceMotion ? 0 : Infinity,
+        ease: 'easeInOut',
+      }}
+      style={{ transformOrigin: '870px 235px' }}
+    />
 
     <motion.path
       d="
@@ -475,7 +556,25 @@ export function Hero() {
 {/* ================================================================ */}
 
 <Container className="relative z-10 w-full">
-  <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:gap-10 xl:gap-16">
+
+{/* ============================================================ */}
+{/* PROFESSION — IDENTITY RECONSTRUCTION                          */}
+{/* ============================================================ */}
+
+<ProfessionTypography
+  visible={heroVisible}
+  reduceMotion={Boolean(reduceMotion)}
+  driftX={professionDriftX}
+  driftY={professionDriftY}
+  onIgnite={igniteProfessionSignal}
+  onHumanPreviewChange={setHumanPreview}
+  onHumanToggle={() => {
+    setHumanLocked((current) => !current);
+  }}
+  humanLocked={humanLocked}
+/>
+
+  <div className="relative z-[2] grid items-center gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)] lg:gap-10 xl:gap-16">
     {/* ============================================================ */}
     {/* LEFT — IDENTITY                                              */}
     {/* ============================================================ */}
@@ -486,342 +585,99 @@ export function Hero() {
       {/* ======================================================== */}
       {/* SIGNATURE / PEEK EASTER EGG                              */}
       {/* ======================================================== */}
-
-      <motion.div
-        initial={
-          reduceMotion
-            ? false
-            : {
-                opacity: 0,
-                y: 22,
-              }
+<motion.div
+  initial={
+    reduceMotion
+      ? false
+      : {
+          opacity: 0,
+          y: 12,
         }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          delay: 0.15,
-          duration: 0.75,
-          ease: [0.22, 1, 0.36, 1],
-        }}
+  }
+  animate={{
+    opacity: 1,
+    y: 0,
+  }}
+  transition={{
+    delay: reduceMotion ? 0 : 0.12,
+    duration: reduceMotion ? 0 : 0.9,
+    ease: [0.22, 1, 0.36, 1],
+  }}
         className="relative -ml-3 mt-5 h-[300px] w-[108%] overflow-visible sm:-ml-6 sm:h-[350px] sm:w-[116%] lg:-ml-14 lg:mt-6 lg:h-[400px] lg:w-[128%] lg:-translate-x-14 lg:-translate-y-12"
       >
-        {/* ------------------------------------------------------ */}
-        {/* PEEK CHARACTER                                         */}
-        {/* ------------------------------------------------------ */}
+{/* Signature — writes first */}
+<motion.div
+  aria-label="Naily Ashvitha"
+  role="img"
+  className="pointer-events-none absolute inset-0 z-20"
+>
+  <motion.div
+    className="absolute inset-0"
+    initial={reduceMotion ? false : { clipPath: 'inset(0 100% 0 0)' }}
+    animate={{
+      clipPath:
+        reduceMotion || heroVisible
+          ? 'inset(0 0% 0 0)'
+          : 'inset(0 100% 0 0)',
+    }}
+    transition={{
+      duration: reduceMotion ? 0 : 4.8,
+      delay: reduceMotion ? 0 : 0.35,
+      ease: [0.45, 0, 0.2, 1],
+    }}
+  >
+    <Image
+      src="/images/naily-signature-ink.png"
+      alt=""
+      fill
+      priority
+      sizes="(max-width: 768px) 90vw, 1000px"
+      className="object-contain object-left"
+    />
+  </motion.div>
 
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10 overflow-visible"
-        >
-          <motion.div
-            initial={false}
-            animate={
-              peekActive
-                ? {
-                    opacity: 1,
-                    x: reduceMotion
-                      ? 0
-                      : peekPointer.x,
-                    y: reduceMotion
-                      ? 0
-                      : peekPointer.y,
-                    rotate: reduceMotion
-                      ? 0
-                      : -1.2,
-                    scale: 1,
-                  }
-                : {
-                    opacity: 0,
-                    x: 0,
-                    y: reduceMotion
-                      ? 0
-                      : 72,
-                    rotate: reduceMotion
-                      ? 0
-                      : -3,
-                    scale: reduceMotion
-                      ? 1
-                      : 0.96,
-                  }
-            }
-            transition={
-              reduceMotion
-                ? {
-                    duration: 0,
-                  }
-                : {
-                    opacity: {
-                      duration: 0.2,
-                    },
-                    x: {
-                      duration: 0.32,
-                      ease: [0.22, 1, 0.36, 1],
-                    },
-                    y: {
-                      type: 'spring',
-                      stiffness: 190,
-                      damping: 20,
-                      mass: 0.72,
-                    },
-                    rotate: {
-                      duration: 0.45,
-                      ease: [0.22, 1, 0.36, 1],
-                    },
-                    scale: {
-                      duration: 0.45,
-                      ease: [0.22, 1, 0.36, 1],
-                    },
-                  }
-            }
-            className="
-              absolute
-              bottom-[78%]
-              left-[28%]
-              h-[55%]
-              w-[32%]
-              origin-bottom
-              sm:bottom-[77%]
-              sm:left-[28%]
-              sm:h-[50%]
-              sm:w-[32%]
-              lg:bottom-[73%]
-              lg:left-[29%]
-              lg:h-[59%]
-              lg:w-[32%]
-            "
-          >
-            <Image
-              src="/images/naily-signature-peek.png"
-              alt=""
-              fill
-              sizes="(max-width: 640px) 220px, 300px"
-              className="object-contain object-bottom"
-            />
-          </motion.div>
-
-          {/* ---------------------------------------------------- */}
-          {/* LITTLE GREETING                                      */}
-          {/* ---------------------------------------------------- */}
-
-<AnimatePresence>
-  {peekActive && (
-    <motion.div
-      initial={
-        reduceMotion
-          ? {
-              opacity: 1,
-            }
-          : {
-              opacity: 0,
-              x: -6,
-              y: 8,
-              scale: 0.94,
-            }
-      }
-      animate={{
-        opacity: 1,
-        x: 0,
-        y: 0,
-        scale: 1,
-      }}
-      exit={
-        reduceMotion
-          ? {
-              opacity: 0,
-            }
-          : {
-              opacity: 0,
-              x: -3,
-              y: 4,
-              scale: 0.97,
-            }
-      }
-      transition={{
-        delay: reduceMotion ? 0 : 0.18,
-        duration: reduceMotion ? 0 : 0.38,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className="
-        absolute
-        bottom-[114%]
-        left-[53%]
-        rotate-[15deg]
-        whitespace-nowrap
-        sm:bottom-[115%]
-        sm:left-[55%]
-        lg:bottom-[115%]
-        lg:left-[56%]
-      "
-    >
-      <motion.div
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                y: [0, -2, 0],
-              }
-        }
-        transition={
-          reduceMotion
-            ? undefined
-            : {
-                duration: 3.2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }
-        }
-        className="
-          relative
-          rounded-full
-          border
-          border-foreground/[0.10]
-          bg-background/80
-          px-4
-          py-2
-          shadow-[0_8px_30px_rgba(30,20,60,0.08)]
-          backdrop-blur-md
-        "
-      >
-        {/* tiny violet accent */}
-        <span
-          aria-hidden="true"
-          className="
-            absolute
-            -left-1
-            top-1/2
-            h-2
-            w-2
-            -translate-y-1/2
-            rounded-full
-            bg-soft-violet/70
-            shadow-[0_0_10px_rgba(139,92,246,0.35)]
-          "
-        />
-
-        <span className="font-serif text-[0.94rem] italic tracking-[-0.015em] text-foreground/75 sm:text-[1rem]">
-          oh, hello.
-        </span>
-
-        {/* tiny connector toward the cutout */}
-        <span
-          aria-hidden="true"
-          className="
-            absolute
-            -bottom-[5px]
-            left-[22%]
-            h-[9px]
-            w-[9px]
-            rotate-45
-            border-b
-            border-r
-            border-foreground/[0.08]
-            bg-background/80
-          "
-        />
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
-        </div>
-
-        {/* ------------------------------------------------------ */}
-        {/* ORIGINAL SIGNATURE — FOREGROUND                        */}
-        {/* ------------------------------------------------------ */}
-
-        <div className="pointer-events-none absolute inset-0 z-20">
-          <Image
-            src="/images/naily-signature.png"
-            alt="Naily Ashvitha"
-            fill
-            priority
-            sizes="(max-width: 768px) 90vw, 1000px"
-            className="object-contain object-left"
-          />
-        </div>
-
-        {/* ------------------------------------------------------ */}
-        {/* GLASSES HOTSPOT                                        */}
-        {/* ------------------------------------------------------ */}
-
-        <button
-          type="button"
-          aria-label="Say hello to Naily"
-          aria-expanded={peekActive}
-          onPointerEnter={() => {
-            setPeekActive(true);
-          }}
-          onPointerLeave={() => {
-            setPeekActive(false);
-
-            setPeekPointer({
-              x: 0,
-              y: 0,
-            });
-          }}
-          onPointerMove={(event) => {
-            if (reduceMotion) return;
-
-            const bounds =
-              event.currentTarget.getBoundingClientRect();
-
-            const x =
-              (event.clientX - bounds.left) /
-              bounds.width;
-
-            const y =
-              (event.clientY - bounds.top) /
-              bounds.height;
-
-            setPeekPointer({
-              x: (x - 0.5) * 5,
-              y: (y - 0.5) * 3,
-            });
-          }}
-          onFocus={() => {
-            setPeekActive(true);
-          }}
-          onBlur={() => {
-            setPeekActive(false);
-
-            setPeekPointer({
-              x: 0,
-              y: 0,
-            });
-          }}
-          onClick={() => {
-            setPeekActive(
-              (current) => !current,
-            );
-          }}
-          className="
-            absolute
-            bottom-[9%]
-            left-[17%]
-            z-30
-            h-[37%]
-            w-[18%]
-            cursor-pointer
-            rounded-[45%]
-            bg-transparent
-            outline-none
-            focus-visible:ring-1
-            focus-visible:ring-soft-violet/35
-            sm:bottom-[8%]
-            sm:left-[17%]
-            sm:h-[38%]
-            sm:w-[17%]
-            lg:bottom-[8%]
-            lg:left-[18%]
-            lg:h-[39%]
-            lg:w-[16%]
-          "
-        >
-          <span className="sr-only">
-            Reveal a small hello
-          </span>
-        </button>
+  {/* Glasses — arrive after writing finishes */}
+  <motion.div
+    className="absolute inset-0"
+    style={{ transformOrigin: '19% 45%' }}
+    initial={
+      reduceMotion
+        ? false
+        : {
+            opacity: 0,
+            y: -65,
+            rotate: -9,
+          }
+    }
+    animate={
+      reduceMotion || heroVisible
+        ? {
+            opacity: 1,
+            y: 0,
+            rotate: 0,
+          }
+        : {
+            opacity: 0,
+            y: -65,
+            rotate: -9,
+          }
+    }
+    transition={{
+      delay: reduceMotion ? 0 : 5.25,
+      duration: reduceMotion ? 0 : 1.4,
+      ease: [0.22, 1, 0.36, 1],
+    }}
+  >
+    <Image
+      src="/images/naily-signature-glasses.png"
+      alt=""
+      fill
+      priority
+      sizes="(max-width: 768px) 90vw, 1000px"
+      className="object-contain object-left"
+    />
+  </motion.div>
+</motion.div>
       </motion.div>
 
 
@@ -1431,1969 +1287,80 @@ export function Hero() {
 
 
 {/* ============================================================ */}
-{/* RIGHT — NAILY / LIVING SYSTEM                                */}
+{/* RIGHT — LIVING EDITORIAL ARCHITECTURE                        */}
 {/* ============================================================ */}
 
 <motion.div
   initial={
     reduceMotion
       ? false
-      : {
-          opacity: 0,
-          x: 24,
-        }
+      : { opacity: 0, x: 20 }
   }
   animate={{
     opacity: 1,
     x: 0,
   }}
   transition={{
-    delay: 0.22,
-    duration: 0.85,
+    delay: 0.3,
+    duration: 0.9,
     ease: [0.22, 1, 0.36, 1],
   }}
   className="
     relative
     mx-auto
     w-full
-    max-w-[620px]
-    lg:-mr-10
-    lg:ml-auto
-    xl:-mr-16
+  max-w-[620px]
+  min-h-[480px]
+  sm:min-h-[540px]
+  lg:h-[560px]
+  lg:min-h-0
+  lg:-mr-10
+  lg:ml-auto
+  xl:-mr-16
   "
 >
-  {/* ========================================================== */}
-  {/* LIVING SYSTEM STAGE                                       */}
-  {/* ========================================================== */}
-
-  <motion.div
-    onPointerMove={(event) => {
-      if (reduceMotion) return;
-
-      const bounds =
-        event.currentTarget.getBoundingClientRect();
-
-      const x =
-        (event.clientX - bounds.left) /
-        bounds.width;
-
-      const y =
-        (event.clientY - bounds.top) /
-        bounds.height;
-
-      event.currentTarget.style.setProperty(
-        '--naily-x',
-        `${(x - 0.5) * 5}px`,
-      );
-
-      event.currentTarget.style.setProperty(
-        '--naily-y',
-        `${(y - 0.5) * 4}px`,
-      );
-    }}
-    onPointerLeave={(event) => {
-      event.currentTarget.style.setProperty(
-        '--naily-x',
-        '0px',
-      );
-
-      event.currentTarget.style.setProperty(
-        '--naily-y',
-        '0px',
-      );
-    }}
-className="
-      group/naily
-      relative
-      mt-2
-      h-[500px]
-      w-full
-      sm:mt-3
-      sm:h-[570px]
-      lg:mt-0
-      lg:h-[720px]
-      xl:h-[750px]
-    "
-  >
-    {/* -------------------------------------------------------- */}
-    {/* ATMOSPHERIC FIELD                                       */}
-    {/* -------------------------------------------------------- */}
-
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -inset-x-16 -inset-y-10"
-    >
-      <div
-        className="
-          absolute
-          left-[15%]
-          top-[13%]
-          h-[62%]
-          w-[70%]
-          rounded-full
-          bg-soft-violet/[0.055]
-          blur-[80px]
-        "
-      />
-
-      <div
-        className="
-          absolute
-          bottom-[8%]
-          right-[3%]
-          h-[34%]
-          w-[42%]
-          rounded-full
-          bg-cool-blue/[0.045]
-          blur-[75px]
-        "
-      />
-
-      <HeroSystemField
-        activeLayer={activeLayer}
-        pointer={signalPointer}
-        reduceMotion={reduceMotion}
-        className="opacity-70"
-      />
-    </div>
-
-    {/* -------------------------------------------------------- */}
-    {/* TOP SYSTEM RAIL                                         */}
-    {/* -------------------------------------------------------- */}
-
-    <div
-      aria-hidden="true"
-      className="
-        absolute
-        left-[4%]
-        right-[3%]
-        top-[3%]
-        z-30
-        hidden
-        items-center
-        gap-3
-        lg:flex
-      "
-    >
-      <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-soft-violet/70">
-        Identity / Living System
-      </span>
-
-      <span className="h-px flex-1 bg-gradient-to-r from-soft-violet/30 via-soft-violet/[0.09] to-transparent" />
-
-      <motion.span
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                opacity:
-                  activeLayer !== null
-                    ? [0.45, 1, 0.45]
-                    : [0.22, 0.5, 0.22],
-
-                scale:
-                  activeLayer !== null
-                    ? [1, 1.35, 1]
-                    : [1, 1.12, 1],
-              }
-        }
-        transition={{
-          duration:
-            activeLayer !== null ? 1.7 : 3,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className={[
-          'h-1.5 w-1.5 rounded-full border transition-colors duration-300',
-          activeLayer !== null
-            ? 'border-soft-violet bg-soft-violet'
-            : 'border-soft-violet/35 bg-soft-lavender',
-        ].join(' ')}
-      />
-    </div>
-
-        {/* ======================================================== */}
-    {/* SOFTWARE ENGINEER — TYPOGRAPHIC DEPTH PLANE              */}
-    {/* Experimental static composition                          */}
-    {/* ======================================================== */}
-
+<div className="relative h-full min-h-[480px] sm:min-h-[540px] lg:min-h-0">
+  <AnimatePresence mode="sync" initial={false}>
+  {humanVisible ? (
     <motion.div
-      aria-hidden="true"
-      initial={
-        reduceMotion
-          ? false
-          : {
-              opacity: 0,
-              x: -18,
-            }
-      }
-      animate={{
-        opacity: 1,
-        x: 0,
-      }}
+      key="human"
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
       transition={{
-        delay: 0.34,
-        duration: 0.9,
+        duration: reduceMotion ? 0 : 0.6,
         ease: [0.22, 1, 0.36, 1],
       }}
       className="
-        pointer-events-none
-        absolute
-        left-[-48%]
-        top-[43%]
-        z-[4]
-        hidden
-        w-[158%]
-        -translate-y-1/2
-        lg:block
-      "
-    >
-      <div
-        className="
-          select-none
-          font-sans
-          text-[clamp(5rem,8.4vw,8.4rem)]
-          font-black
-          uppercase
-          leading-[0.72]
-          tracking-[-0.075em]
-          text-foreground/[0.075]
-        "
-      >
-        <div className="whitespace-nowrap">
-          SOFTWARE
-        </div>
-
-        <div className="ml-[12%] mt-[0.16em] whitespace-nowrap">
-          ENGINEER
-        </div>
-      </div>
-
-      <div
-        aria-hidden="true"
-        className="
-          absolute
-          left-[7%]
-          top-[48%]
-          h-px
-          w-[82%]
-          bg-gradient-to-r
-          from-transparent
-          via-soft-violet/[0.16]
-          to-transparent
-        "
-      />
-    </motion.div>
-
-    {/* ======================================================== */}
-    {/* BACK SYSTEM — LIVES BEHIND NAILY                         */}
-    {/* ======================================================== */}
-
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-0"
-    >
-      {/* ghost architecture plane */}
-
-      <motion.div
-        animate={{
-          opacity:
-            activeLayer === 'systems'
-              ? 0.75
-              : activeLayer !== null
-                ? 0.42
-                : 0.2,
-
-          scale:
-            activeLayer === 'systems'
-              ? 1.02
-              : 1,
-        }}
-        transition={{
-          duration: 0.55,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        className="
-          absolute
-          left-[9%]
-          top-[16%]
-          h-[67%]
-          w-[82%]
-          rounded-[46%]
-          border
-          border-soft-violet/[0.10]
-        "
-      />
-
-      <motion.div
-        animate={{
-          opacity:
-            activeLayer === 'backend'
-              ? 0.8
-              : activeLayer === 'systems'
-                ? 0.58
-                : 0.18,
-
-          x:
-            activeLayer === 'backend'
-              ? 6
-              : 0,
-        }}
-        transition={{
-          duration: 0.5,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        className="
-          absolute
-          right-[8%]
-          top-[24%]
-          h-[49%]
-          w-[57%]
-          rounded-[44%]
-          border
-          border-cool-blue/[0.13]
-        "
-      />
-
-      {/* LEFT → BEHIND NAILY route */}
-
-      <svg
-        viewBox="0 0 560 650"
-        preserveAspectRatio="none"
-        className="absolute inset-0 h-full w-full overflow-visible"
-      >
-        <motion.path
-          d="M 12 245 C 105 245, 118 188, 224 198 C 302 205, 327 265, 395 266"
-          fill="none"
-          stroke="rgba(124,108,242,0.18)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          animate={{
-            pathLength:
-              activeLayer === 'interface' ||
-              activeLayer === 'systems'
-                ? 1
-                : 0.52,
-
-            opacity:
-              activeLayer === 'interface'
-                ? 0.9
-                : activeLayer === 'systems'
-                  ? 0.7
-                  : 0.3,
-          }}
-          transition={{
-            duration: 0.65,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-
-        <motion.path
-          d="M 154 480 C 218 433, 280 435, 332 461 C 387 489, 431 470, 548 398"
-          fill="none"
-          stroke="rgba(109,158,232,0.18)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          animate={{
-            pathLength:
-              activeLayer === 'backend' ||
-              activeLayer === 'systems'
-                ? 1
-                : 0.48,
-
-            opacity:
-              activeLayer === 'backend'
-                ? 0.85
-                : activeLayer === 'systems'
-                  ? 0.65
-                  : 0.24,
-          }}
-          transition={{
-            duration: 0.7,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-
-        <motion.path
-          d="M 65 380 C 152 337, 230 356, 282 395 C 337 437, 402 423, 502 331"
-          fill="none"
-          stroke="rgba(124,108,242,0.12)"
-          strokeWidth="1"
-          strokeDasharray="3 8"
-          animate={{
-            opacity:
-              activeLayer === 'systems'
-                ? 0.85
-                : 0.18,
-
-            pathLength:
-              activeLayer === 'systems'
-                ? 1
-                : 0.38,
-          }}
-          transition={{
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-      </svg>
-
-      {/* idle/back nodes */}
-
-      <motion.span
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                scale: [1, 1.45, 1],
-                opacity: [0.25, 0.6, 0.25],
-              }
-        }
-        transition={{
-          duration: 3.2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="
-          absolute
-          left-[12%]
-          top-[37%]
-          h-2
-          w-2
-          rounded-full
-          border
-          border-soft-violet/35
-          bg-soft-lavender
-        "
-      />
-
-      <motion.span
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                scale: [1, 1.3, 1],
-                opacity: [0.2, 0.5, 0.2],
-              }
-        }
-        transition={{
-          duration: 3.8,
-          repeat: Infinity,
-          delay: 0.7,
-          ease: 'easeInOut',
-        }}
-        className="
-          absolute
-          right-[11%]
-          top-[47%]
-          h-1.5
-          w-1.5
-          rounded-full
-          border
-          border-cool-blue/40
-          bg-soft-lavender
-        "
-      />
-    </div>
-
-    {/* ======================================================== */}
-{/* IDLE IDENTITY CONSTELLATION                              */}
-{/* ======================================================== */}
-
-<AnimatePresence>
-  {activeLayer === null && (
-    <motion.div
-      key="identity-constellation"
-      aria-hidden="true"
-      initial={
-        reduceMotion
-          ? false
-          : {
-              opacity: 0,
-            }
-      }
-      animate={{
-        opacity: 1,
-      }}
-      exit={{
-        opacity: 0,
-      }}
-      transition={{
-        duration: reduceMotion ? 0 : 0.35,
-      }}
-      className="
-        pointer-events-none
-        absolute
-        inset-0
-        z-30
-        hidden
-        lg:block
-      "
-    >
-      {/* ---------------------------------------------------- */}
-      {/* UNDERGRADUATE — upper left                           */}
-      {/* ---------------------------------------------------- */}
-
-      <motion.div
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                y: [0, -4, 0],
-              }
-        }
-        transition={{
-          duration: 5.4,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="
-          absolute
-          left-[-2%]
-          top-[20%]
-          w-[170px]
-        "
-      >
-        <div className="mb-2 flex items-center gap-2">
-          <motion.span
-            animate={
-              reduceMotion
-                ? undefined
-                : {
-                    opacity: [0.35, 0.9, 0.35],
-                    scale: [1, 1.25, 1],
-                  }
-            }
-            transition={{
-              duration: 2.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="
-              h-1.5
-              w-1.5
-              rounded-full
-              bg-soft-violet/70
-              shadow-[0_0_12px_rgba(124,108,242,0.32)]
-            "
-          />
-
-          <span className="h-px w-7 bg-soft-violet/20" />
-
-          <span className="
-            text-[7px]
-            font-semibold
-            uppercase
-            tracking-[0.2em]
-            text-soft-violet/60
-          ">
-            Undergraduate at
-          </span>
-        </div>
-
-        <div className="pl-[42px]">
-          <p className="
-            font-serif
-            text-[1.02rem]
-            leading-none
-            tracking-[-0.025em]
-            text-foreground/80
-          ">
-            SLIIT Kandy UNI
-          </p>
-        </div>
-      </motion.div>
-
-      {/* ---------------------------------------------------- */}
-      {/* SPECIALIZATION — upper right                         */}
-      {/* ---------------------------------------------------- */}
-
-      <motion.div
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                y: [0, 4, 0],
-                x: [0, 2, 0],
-              }
-        }
-        transition={{
-          duration: 6.2,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 0.4,
-        }}
-        className="
-          absolute
-          right-[-30%]
-          top-[35%]
-          w-[205px]
-        "
-      >
-        <div className="mb-2 flex items-center gap-2">
-          <span className="
-            text-[7px]
-            font-semibold
-            uppercase
-            tracking-[0.2em]
-            text-cool-blue/65
-          ">
-            Specialization
-          </span>
-
-          <span className="h-px flex-1 bg-cool-blue/20" />
-
-          <motion.span
-            animate={
-              reduceMotion
-                ? undefined
-                : {
-                    opacity: [0.3, 0.85, 0.3],
-                    scale: [1, 1.25, 1],
-                  }
-            }
-            transition={{
-              duration: 3.1,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="
-              h-1.5
-              w-1.5
-              rounded-full
-              bg-cool-blue/65
-              shadow-[0_0_12px_rgba(109,158,232,0.28)]
-            "
-          />
-        </div>
-
-        <div
-          className="
-            border-l
-            border-cool-blue/[0.18]
-            py-1
-            py-3
-          "
-        >
-          <p className="
-            text-[8px]
-            leading-[1.45]
-            tracking-[0.015em]
-            text-muted-foreground/55
-          ">
-            BSc (Hons) Information Technology
-          </p>
-
-          <p className="
-            mt-1
-            font-serif
-            text-[1rem]
-            leading-none
-            tracking-[-0.025em]
-            text-foreground/80
-          ">
-            Software Engineering
-          </p>
-        </div>
-      </motion.div>
-
-      {/* ---------------------------------------------------- */}
-      {/* CURRENTLY — lower right                              */}
-      {/* ---------------------------------------------------- */}
-
-      <motion.div
-        animate={
-          reduceMotion
-            ? undefined
-            : {
-                y: [0, -3, 0],
-              }
-        }
-        transition={{
-          duration: 4.8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: 0.8,
-        }}
-        className="
   absolute
-  bottom-[23%]
-  left-[-1%]
-  flex
-  items-center
-  gap-3
+  inset-0
+  z-20
+  w-full
+  lg:-ml-6
+  lg:w-[calc(100%+1.5rem)]
+  xl:-ml-8
+  xl:w-[calc(100%+2rem)]
 "
-      >
-        <div className="text-left">
-          <p className="
-            text-[7px]
-            font-semibold
-            uppercase
-            tracking-[0.2em]
-            text-soft-violet/55
-          ">
-            Currently in
-          </p>
-
-          <p className="
-            mt-1
-            font-serif
-            text-[1.25rem]
-            leading-none
-            tracking-[-0.03em]
-            text-foreground/75
-          ">
-            3Y2S
-          </p>
-        </div>
-
-        <span className="h-px w-9 bg-soft-violet/20" />
-
-        <motion.span
-          animate={
-            reduceMotion
-              ? undefined
-              : {
-                  scale: [1, 1.4, 1],
-                  opacity: [0.35, 0.9, 0.35],
-                }
-          }
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="
-            h-2
-            w-2
-            rounded-full
-            border
-            border-soft-violet/45
-            bg-soft-lavender
-            shadow-[0_0_14px_rgba(124,108,242,0.22)]
-          "
-        />
-      </motion.div>
-
-      {/* ---------------------------------------------------- */}
-      {/* IDENTITY CONNECTOR PATHS                             */}
-      {/* ---------------------------------------------------- */}
-
-      <svg
-        viewBox="0 0 620 750"
-        preserveAspectRatio="none"
-        className="
-          absolute
-          inset-0
-          -z-10
-          h-full
-          w-full
-          overflow-visible
-        "
-      >
-        <motion.path
-          d="M 112 184 C 170 191, 186 224, 238 238"
-          fill="none"
-          stroke="rgba(124,108,242,0.20)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeDasharray="3 7"
-          animate={
-            reduceMotion
-              ? undefined
-              : {
-                  opacity: [0.25, 0.6, 0.25],
-              }
-          }
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        <motion.path
-          d="M 414 247 C 468 244, 506 229, 594 216"
-          fill="none"
-          stroke="rgba(109,158,232,0.20)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeDasharray="4 8"
-          animate={
-            reduceMotion
-              ? undefined
-              : {
-                  opacity: [0.2, 0.55, 0.2],
-              }
-          }
-          transition={{
-            duration: 4.8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        <motion.path
-          d="M 34 565 C 105 552, 154 529, 224 518"
-          fill="none"
-          stroke="rgba(124,108,242,0.18)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          animate={
-            reduceMotion
-              ? undefined
-              : {
-                  opacity: [0.2, 0.5, 0.2],
-              }
-          }
-          transition={{
-            duration: 5.2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      </svg>
+    >
+      <HumanReveal reduceMotion={Boolean(reduceMotion)} />
+    </motion.div>
+  ) : (
+    <motion.div
+key="architecture"
+initial={reduceMotion ? false : { opacity: 0 }}
+animate={{ opacity: 1 }}
+exit={{ opacity: 0 }}
+transition={{ duration: reduceMotion ? 0 : 0.25 }}
+className="absolute inset-0 w-full"
+    >
+      <LivingEditorial
+        activeLayer={activeLayer}
+        reduceMotion={Boolean(reduceMotion)}
+      />
     </motion.div>
   )}
 </AnimatePresence>
-
-    {/* ======================================================== */}
-    {/* CONTEXTUAL REAR MODULES                                  */}
-    {/* ======================================================== */}
-
-    <AnimatePresence>
-      {activeLayer === 'interface' && (
-        <motion.div
-          key="interface-rear"
-          aria-hidden="true"
-          initial={
-            reduceMotion
-              ? { opacity: 1 }
-              : {
-                  opacity: 0,
-                  x: -16,
-                  scale: 0.96,
-                }
-          }
-          animate={{
-            opacity: 1,
-            x: 0,
-            scale: 1,
-          }}
-          exit={{
-            opacity: 0,
-            x: -10,
-          }}
-          transition={{
-            duration: reduceMotion
-              ? 0
-              : 0.4,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="
-            pointer-events-none
-            absolute
-            left-[4%]
-            top-[24%]
-            z-[1]
-            hidden
-            w-[165px]
-            rounded-[1.2rem]
-            border
-            border-soft-violet/[0.14]
-            bg-background/[0.16]
-            p-3
-            backdrop-blur-[2px]
-            sm:block
-          "
-        >
-          <div className="flex items-center gap-1.5">
-            <span className="h-1 w-1 rounded-full bg-soft-violet/60" />
-            <span className="h-1 w-8 rounded-full bg-soft-violet/15" />
-          </div>
-
-          <div className="mt-3 space-y-2">
-            <span className="block h-2 w-[72%] rounded-full bg-soft-violet/[0.10]" />
-            <span className="block h-2 w-full rounded-full bg-foreground/[0.035]" />
-
-            <div className="grid grid-cols-2 gap-1.5 pt-1">
-              <span className="h-8 rounded-lg border border-soft-violet/[0.10]" />
-              <span className="h-8 rounded-lg border border-soft-violet/[0.10]" />
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {activeLayer === 'backend' && (
-        <motion.div
-          key="backend-rear"
-          aria-hidden="true"
-          initial={
-            reduceMotion
-              ? { opacity: 1 }
-              : {
-                  opacity: 0,
-                  x: 14,
-                  scale: 0.96,
-                }
-          }
-          animate={{
-            opacity: 1,
-            x: 0,
-            scale: 1,
-          }}
-          exit={{
-            opacity: 0,
-            x: 10,
-          }}
-          transition={{
-            duration: reduceMotion
-              ? 0
-              : 0.4,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="
-            pointer-events-none
-            absolute
-            right-[3%]
-            top-[29%]
-            z-[1]
-            hidden
-            w-[160px]
-            sm:block
-          "
-        >
-          {[
-            'REQUEST',
-            'SERVICE',
-            'DATA',
-          ].map((label, index) => (
-            <div
-              key={label}
-              className="relative mb-3 flex items-center gap-2"
-            >
-              <motion.span
-                animate={
-                  reduceMotion
-                    ? undefined
-                    : {
-                        opacity: [
-                          0.3,
-                          1,
-                          0.3,
-                        ],
-                      }
-                }
-                transition={{
-                  duration: 1.6,
-                  repeat: Infinity,
-                  delay: index * 0.22,
-                }}
-                className="h-1.5 w-1.5 rounded-full bg-cool-blue/60"
-              />
-
-              <span className="text-[7px] font-semibold tracking-[0.18em] text-foreground/30">
-                {label}
-              </span>
-
-              <span className="h-px flex-1 bg-cool-blue/[0.14]" />
-            </div>
-          ))}
-        </motion.div>
-      )}
-    </AnimatePresence>
-
-
-{/* ======================================================== */}
-{/* NAILY — MIDDLE DEPTH PLANE                               */}
-{/* ======================================================== */}
-
-<div
-  className="
-    pointer-events-none
-    absolute
-    bottom-[1%]
-    left-1/2
-    z-10
-    h-[92%]
-    w-[88%]
-    -translate-x-1/2
-    sm:bottom-0
-    sm:left-1/2
-    sm:h-[96%]
-    sm:w-[90%]
-    lg:-bottom-[6%]
-    lg:left-[61%]
-    lg:h-[108%]
-    lg:w-[94%]
-    xl:left-[62%]
-    xl:h-[110%]
-    xl:w-[96%]
-  "
->
-  <motion.div
-    initial={
-      reduceMotion
-        ? false
-        : {
-            opacity: 0,
-            y: 22,
-            scale: 0.985,
-          }
-    }
-    animate={{
-      opacity: 1,
-      y: 0,
-      scale: 1,
-    }}
-    transition={{
-      delay: 0.28,
-      duration: 0.85,
-      ease: [0.22, 1, 0.36, 1],
-    }}
-    style={{
-      x: 'var(--naily-x, 0px)',
-      y: 'var(--naily-y, 0px)',
-    }}
-    className="relative h-full w-full"
-  >
-{/* ------------------------------------------------------ */}
-{/* PORTRAIT ATMOSPHERIC INTEGRATION                       */}
-{/* ------------------------------------------------------ */}
-
-<div
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    absolute
-    bottom-[3%]
-    left-[54%]
-    h-[76%]
-    w-[64%]
-    -translate-x-1/2
-  "
->
-  {/* broad ambient violet field */}
-  <motion.div
-    animate={{
-      opacity:
-        activeLayer === 'systems'
-          ? 0.82
-          : activeLayer !== null
-            ? 0.68
-            : 0.52,
-
-      scale:
-        activeLayer === 'systems'
-          ? 1.06
-          : activeLayer !== null
-            ? 1.03
-            : 1,
-    }}
-    transition={{
-      duration: 0.65,
-      ease: [0.22, 1, 0.36, 1],
-    }}
-    className="
-      absolute
-      inset-[3%]
-      rounded-[48%]
-      bg-soft-violet/[0.075]
-      blur-[72px]
-    "
-  />
-
-  {/* concentrated light behind head / upper body */}
-  <motion.div
-    animate={{
-      opacity:
-        activeLayer !== null
-          ? 0.72
-          : 0.46,
-
-      scale:
-        activeLayer !== null
-          ? 1.05
-          : 1,
-    }}
-    transition={{
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1],
-    }}
-    className="
-      absolute
-      left-[17%]
-      top-[5%]
-      h-[48%]
-      w-[70%]
-      rounded-full
-      bg-soft-violet/[0.075]
-      blur-[58px]
-    "
-  />
-
-  {/* cool lower-depth atmosphere */}
-  <motion.div
-    animate={{
-      opacity:
-        activeLayer === 'backend'
-          ? 0.68
-          : activeLayer === 'systems'
-            ? 0.6
-            : 0.34,
-
-      x:
-        activeLayer === 'backend'
-          ? 8
-          : 0,
-    }}
-    transition={{
-      duration: 0.65,
-      ease: [0.22, 1, 0.36, 1],
-    }}
-    className="
-      absolute
-      bottom-[8%]
-      right-[2%]
-      h-[42%]
-      w-[55%]
-      rounded-full
-      bg-cool-blue/[0.06]
-      blur-[68px]
-    "
-  />
-
-  {/* quiet inner illumination */}
-  <motion.div
-    animate={
-      reduceMotion
-        ? undefined
-        : {
-            opacity:
-              activeLayer !== null
-                ? [0.18, 0.3, 0.18]
-                : [0.1, 0.17, 0.1],
-
-            scale:
-              activeLayer !== null
-                ? [0.98, 1.04, 0.98]
-                : [0.99, 1.015, 0.99],
-          }
-    }
-    transition={{
-      duration:
-        activeLayer !== null
-          ? 3.8
-          : 6.5,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    }}
-    className="
-      absolute
-      left-[28%]
-      top-[19%]
-      h-[38%]
-      w-[48%]
-      rounded-full
-      bg-white/30
-      blur-[70px]
-    "
-  />
 </div>
-
-{/* ------------------------------------------------------ */}
-{/* PORTRAIT RADIANT SILHOUETTE                             */}
-{/* ------------------------------------------------------ */}
-
-<div
-  aria-hidden="true"
-  className="pointer-events-none absolute inset-0 z-[6]"
->
-  {/* wide violet radiance */}
-
-  <motion.div
-    animate={
-      reduceMotion
-        ? undefined
-        : {
-            opacity: [0.42, 0.62, 0.42],
-            scale: [1, 1.008, 1],
-          }
-    }
-    transition={{
-      duration: 7.2,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    }}
-    className="absolute inset-0"
-  >
-    <Image
-      src="/images/naily-portrait-cutout.png"
-      alt=""
-      fill
-      sizes="(max-width: 1024px) 94vw, 610px"
-className="
-  object-contain
-  object-bottom
-  opacity-75
-  [filter:brightness(0)_invert(1)_drop-shadow(0_0_14px_rgba(255,255,255,0.92))_drop-shadow(0_0_34px_rgba(255,255,255,0.52))_drop-shadow(0_0_72px_rgba(255,255,255,0.24))]
-"
-    />
-  </motion.div>
-
-  {/* tighter pearl-lavender rim */}
-
-  <motion.div
-    animate={
-      reduceMotion
-        ? undefined
-        : {
-            opacity: [0.58, 0.82, 0.58],
-          }
-    }
-    transition={{
-      duration: 5.8,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    }}
-    className="absolute inset-0"
-  >
-    <Image
-      src="/images/naily-portrait-cutout.png"
-      alt=""
-      fill
-      sizes="(max-width: 1024px) 94vw, 610px"
-className="
-  object-contain
-  object-bottom
-  opacity-85
-  [filter:brightness(0)_invert(1)_drop-shadow(0_0_3px_rgba(255,255,255,1))_drop-shadow(0_0_8px_rgba(255,255,255,0.92))_drop-shadow(0_0_18px_rgba(255,255,255,0.58))]
-"
-    />
-  </motion.div>
-
-  {/* ---------------------------------------------------- */}
-  {/* RADIANT MICRO-SPARKS                                 */}
-  {/* ---------------------------------------------------- */}
-
-  {!reduceMotion && (
-    <div className="absolute inset-0">
-      {[
-        {
-          left: '31%',
-          top: '23%',
-          size: 3,
-          delay: 0.2,
-          duration: 3.8,
-        },
-        {
-          left: '38%',
-          top: '17%',
-          size: 2,
-          delay: 1.4,
-          duration: 4.6,
-        },
-        {
-          left: '52%',
-          top: '13%',
-          size: 2.5,
-          delay: 0.8,
-          duration: 4.1,
-        },
-        {
-          left: '67%',
-          top: '21%',
-          size: 2,
-          delay: 2.1,
-          duration: 4.8,
-        },
-        {
-          left: '73%',
-          top: '33%',
-          size: 3,
-          delay: 1.1,
-          duration: 4.3,
-        },
-        {
-          left: '27%',
-          top: '39%',
-          size: 2,
-          delay: 2.6,
-          duration: 5,
-        },
-        {
-          left: '76%',
-          top: '49%',
-          size: 2,
-          delay: 0.5,
-          duration: 4.7,
-        },
-        {
-          left: '24%',
-          top: '57%',
-          size: 2.5,
-          delay: 1.8,
-          duration: 4.4,
-        },
-        {
-          left: '72%',
-          top: '64%',
-          size: 2,
-          delay: 3,
-          duration: 5.2,
-        },
-        {
-          left: '32%',
-          top: '72%',
-          size: 2,
-          delay: 0.9,
-          duration: 4.9,
-        },
-      ].map((spark, index) => (
-        <motion.span
-          key={index}
-          className="
-            absolute
-            rounded-full
-            bg-white
-            shadow-[0_0_4px_rgba(255,255,255,0.95),0_0_9px_rgba(193,181,255,0.75),0_0_16px_rgba(124,108,242,0.32)]
-          "
-          style={{
-            left: spark.left,
-            top: spark.top,
-            width: spark.size,
-            height: spark.size,
-          }}
-          animate={{
-            opacity: [0, 0.25, 0.95, 0.32, 0],
-            scale: [0.45, 0.8, 1.35, 0.85, 0.45],
-            y: [2, 0, -3, -5, -7],
-          }}
-          transition={{
-            duration: spark.duration,
-            delay: spark.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-
-      {/* occasional brighter pearl glint */}
-
-      <motion.span
-        className="
-          absolute
-          left-[70%]
-          top-[27%]
-          h-[3px]
-          w-[3px]
-          rounded-full
-          bg-white
-          shadow-[0_0_5px_rgba(255,255,255,1),0_0_12px_rgba(218,211,255,0.95),0_0_24px_rgba(139,124,255,0.42)]
-        "
-        animate={{
-          opacity: [0, 0, 1, 0.15, 0],
-          scale: [0.5, 0.5, 1.7, 0.8, 0.5],
-        }}
-        transition={{
-          duration: 5.6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
-    </div>
-  )}
-</div>
-
-{/* ------------------------------------------------------ */}
-{/* ACTUAL PORTRAIT — CRISP FOREGROUND                     */}
-{/* ------------------------------------------------------ */}
-
-<Image
-  src="/images/naily-portrait-cutout.png"
-  alt="Portrait of Naily Ashvitha"
-  fill
-  priority
-  sizes="(max-width: 1024px) 94vw, 610px"
-  className="
-    relative
-    z-10
-    object-contain
-    object-bottom
-    drop-shadow-[0_28px_38px_rgba(43,35,90,0.07)]
-  "
-/>
-    
-  </motion.div>
-</div>
-
-
-
-    {/* -------------------------------------------------------- */}
-    {/* GROUNDING / BASE                                         */}
-    {/* -------------------------------------------------------- */}
-
-    <div
-      aria-hidden="true"
-      className="
-        pointer-events-none
-        absolute
-        bottom-[1.5%]
-        left-1/2
-        z-[9]
-        h-px
-        w-[68%]
-        -translate-x-1/2
-        bg-gradient-to-r
-        from-transparent
-        via-soft-violet/20
-        to-transparent
-      "
-    />
-
-    <motion.div
-      aria-hidden="true"
-      animate={
-        reduceMotion
-          ? undefined
-          : {
-              opacity: [0.2, 0.48, 0.2],
-              scaleX: [0.94, 1, 0.94],
-            }
-      }
-      transition={{
-        duration: 3.4,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-      className="
-        pointer-events-none
-        absolute
-        bottom-[0.5%]
-        left-1/2
-        z-[8]
-        h-8
-        w-[54%]
-        -translate-x-1/2
-        rounded-full
-        bg-soft-violet/[0.055]
-        blur-xl
-      "
-    />
-
-    {/* ======================================================== */}
-    {/* FOREGROUND SYSTEM — CROSSES IN FRONT OF NAILY            */}
-    {/* ======================================================== */}
-
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-20"
-    >
-
-      <svg
-        viewBox="0 0 560 650"
-        preserveAspectRatio="none"
-        className="absolute inset-0 h-full w-full overflow-visible"
-      >
-        {/* interface foreground continuation */}
-
-        <motion.path
-          d="M 348 266 C 414 267, 449 238, 548 208"
-          fill="none"
-          stroke="rgba(124,108,242,0.46)"
-          strokeWidth="1.15"
-          strokeLinecap="round"
-          animate={{
-            pathLength:
-              activeLayer === 'interface' ||
-              activeLayer === 'systems'
-                ? 1
-                : 0,
-
-            opacity:
-              activeLayer === 'interface'
-                ? 1
-                : activeLayer === 'systems'
-                  ? 0.65
-                  : 0,
-          }}
-          transition={{
-            duration: 0.55,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-
-        {/* backend foreground continuation */}
-
-        <motion.path
-          d="M 329 461 C 391 493, 453 466, 548 398"
-          fill="none"
-          stroke="rgba(109,158,232,0.42)"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-          animate={{
-            pathLength:
-              activeLayer === 'backend' ||
-              activeLayer === 'systems'
-                ? 1
-                : 0,
-
-            opacity:
-              activeLayer === 'backend'
-                ? 1
-                : activeLayer === 'systems'
-                  ? 0.62
-                  : 0,
-          }}
-          transition={{
-            duration: 0.6,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-
-        {/* systems crossing route */}
-
-        <motion.path
-          d="M 28 530 C 150 474, 214 500, 289 524 C 369 550, 430 524, 536 455"
-          fill="none"
-          stroke="rgba(124,108,242,0.48)"
-          strokeWidth="1.15"
-          strokeLinecap="round"
-          animate={{
-            pathLength:
-              activeLayer === 'systems'
-                ? 1
-                : 0,
-
-            opacity:
-              activeLayer === 'systems'
-                ? 0.95
-                : 0,
-          }}
-          transition={{
-            duration: 0.75,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        />
-      </svg>
-
-      {/* travelling signal — interface */}
-
-      {activeLayer === 'interface' && (
-        <motion.span
-          initial={{
-            left: '60%',
-            top: '40%',
-            opacity: 0,
-          }}
-          animate={
-            reduceMotion
-              ? {
-                  left: '86%',
-                  top: '31%',
-                  opacity: 1,
-                }
-              : {
-                  left: [
-                    '60%',
-                    '72%',
-                    '86%',
-                  ],
-                  top: [
-                    '40%',
-                    '37%',
-                    '31%',
-                  ],
-                  opacity: [
-                    0,
-                    1,
-                    0.4,
-                  ],
-                }
-          }
-          transition={{
-            duration: 1.35,
-            repeat: reduceMotion
-              ? 0
-              : Infinity,
-            ease: 'easeInOut',
-          }}
-          className="
-            absolute
-            h-2
-            w-2
-            rounded-full
-            bg-soft-violet
-            shadow-[0_0_16px_rgba(124,108,242,0.55)]
-          "
-        />
-      )}
-
-      {/* travelling signal — backend */}
-
-      {activeLayer === 'backend' && (
-        <motion.span
-          initial={{
-            left: '58%',
-            top: '70%',
-            opacity: 0,
-          }}
-          animate={
-            reduceMotion
-              ? {
-                  left: '87%',
-                  top: '61%',
-                  opacity: 1,
-                }
-              : {
-                  left: [
-                    '58%',
-                    '72%',
-                    '87%',
-                  ],
-                  top: [
-                    '70%',
-                    '73%',
-                    '61%',
-                  ],
-                  opacity: [
-                    0,
-                    1,
-                    0.4,
-                  ],
-                }
-          }
-          transition={{
-            duration: 1.45,
-            repeat: reduceMotion
-              ? 0
-              : Infinity,
-            ease: 'easeInOut',
-          }}
-          className="
-            absolute
-            h-2
-            w-2
-            rounded-full
-            bg-cool-blue
-            shadow-[0_0_16px_rgba(109,158,232,0.48)]
-          "
-        />
-      )}
-    </div>
-
-    {/* ======================================================== */}
-    {/* FLOATING ARCHITECTURE LABEL                              */}
-    {/* ======================================================== */}
-
-    <AnimatePresence mode="wait">
-      {activeArchitecture ? (
-        <motion.div
-          key={activeLayer}
-          initial={
-            reduceMotion
-              ? {
-                  opacity: 1,
-                }
-              : {
-                  opacity: 0,
-                  y: 10,
-                  x: 8,
-                  scale: 0.96,
-                }
-          }
-          animate={{
-            opacity: 1,
-            y: 0,
-            x: 0,
-            scale: 1,
-          }}
-          exit={
-            reduceMotion
-              ? {
-                  opacity: 0,
-                }
-              : {
-                  opacity: 0,
-                  y: -5,
-                  scale: 0.98,
-                }
-          }
-          transition={{
-            duration:
-              reduceMotion ? 0 : 0.36,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className={[
-            `
-              absolute
-              z-30
-              w-[190px]
-              rounded-[1.15rem]
-              border
-              bg-background/72
-              px-4
-              py-3.5
-              shadow-[0_18px_55px_rgba(43,35,90,0.08)]
-              backdrop-blur-xl
-              sm:w-[205px]
-            `,
-            activeLayer === 'interface'
-              ? 'right-[0%] top-[19%]'
-              : activeLayer === 'backend'
-                ? 'right-[-1%] top-[50%]'
-                : 'left-[1%] top-[61%]',
-          ].join(' ')}
-        >
-          {/* connector dot */}
-
-          <motion.span
-            animate={
-              reduceMotion
-                ? undefined
-                : {
-                    scale: [
-                      1,
-                      1.35,
-                      1,
-                    ],
-                    opacity: [
-                      0.55,
-                      1,
-                      0.55,
-                    ],
-                  }
-            }
-            transition={{
-              duration: 1.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="
-              absolute
-              -left-1
-              top-5
-              h-2
-              w-2
-              rounded-full
-              border
-              border-soft-violet/35
-              bg-soft-violet
-            "
-          />
-
-          <div className="flex items-center gap-2">
-            <span className="text-[8px] font-semibold tabular-nums tracking-[0.18em] text-soft-violet">
-              {activeArchitecture.number}
-            </span>
-
-            <span className="h-px w-5 bg-soft-violet/20" />
-
-            <span className="text-[7px] font-semibold uppercase tracking-[0.18em] text-soft-violet/65">
-              {activeArchitecture.eyebrow}
-            </span>
-          </div>
-
-          <p className="mt-2 font-serif text-[1.05rem] leading-[1.05] tracking-[-0.025em] text-foreground">
-            {activeArchitecture.title}
-          </p>
-
-          <p className="mt-2 text-[9px] leading-[1.5] text-muted-foreground/60">
-            {activeArchitecture.description}
-          </p>
-
-          <div className="mt-3 flex items-center gap-2 border-t border-soft-violet/[0.10] pt-2.5">
-            <motion.span
-              animate={
-                reduceMotion
-                  ? undefined
-                  : {
-                      opacity: [
-                        0.35,
-                        1,
-                        0.35,
-                      ],
-                    }
-              }
-              transition={{
-                duration: 1.7,
-                repeat: Infinity,
-              }}
-              className="h-1 w-1 rounded-full bg-soft-violet"
-            />
-
-            <span className="text-[7px] font-medium leading-[1.4] tracking-[0.04em] text-foreground/40">
-              {activeArchitecture.meta}
-            </span>
-          </div>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="living-system-idle"
-          initial={
-            reduceMotion
-              ? false
-              : {
-                  opacity: 0,
-                  y: 5,
-                }
-          }
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          exit={{
-            opacity: 0,
-          }}
-          transition={{
-            duration:
-              reduceMotion ? 0 : 0.35,
-          }}
-          className="
-            pointer-events-none
-            absolute
-            bottom-[5%]
-            right-[2%]
-            z-30
-            hidden
-            items-center
-            gap-2
-            lg:flex
-          "
-        >
-          <motion.span
-            animate={
-              reduceMotion
-                ? undefined
-                : {
-                    opacity: [
-                      0.2,
-                      0.55,
-                      0.2,
-                    ],
-                  }
-            }
-            transition={{
-              duration: 2.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="h-1 w-1 rounded-full bg-soft-violet"
-          />
-
-          <span className="text-[7px] font-semibold uppercase tracking-[0.19em] text-muted-foreground/30">
-            System / idle
-          </span>
-        </motion.div>
-      )}
-    </AnimatePresence>
-
-    {/* ======================================================== */}
-    {/* SYSTEMS MODE — EXTRA CONNECTED NODES                     */}
-    {/* ======================================================== */}
-
-    <AnimatePresence>
-      {activeLayer === 'systems' && (
-        <>
-          {[
-            {
-              label: 'INTERFACE',
-              position:
-                'left-[3%] top-[35%]',
-              delay: 0,
-            },
-            {
-              label: 'APPLICATION',
-              position:
-                'right-[1%] top-[42%]',
-              delay: 0.08,
-            },
-            {
-              label: 'STATE',
-              position:
-                'right-[8%] bottom-[18%]',
-              delay: 0.16,
-            },
-          ].map((node) => (
-            <motion.div
-              key={node.label}
-              initial={
-                reduceMotion
-                  ? {
-                      opacity: 1,
-                    }
-                  : {
-                      opacity: 0,
-                      scale: 0.8,
-                    }
-              }
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.9,
-              }}
-              transition={{
-                delay:
-                  reduceMotion
-                    ? 0
-                    : node.delay,
-                duration:
-                  reduceMotion
-                    ? 0
-                    : 0.35,
-              }}
-              className={[
-                `
-                  pointer-events-none
-                  absolute
-                  z-30
-                  flex
-                  items-center
-                  gap-2
-                `,
-                node.position,
-              ].join(' ')}
-            >
-              <motion.span
-                animate={
-                  reduceMotion
-                    ? undefined
-                    : {
-                        scale: [
-                          1,
-                          1.35,
-                          1,
-                        ],
-                      }
-                }
-                transition={{
-                  duration: 1.8,
-                  repeat: Infinity,
-                  delay: node.delay,
-                }}
-                className="
-                  h-1.5
-                  w-1.5
-                  rounded-full
-                  border
-                  border-soft-violet/50
-                  bg-soft-lavender
-                  shadow-[0_0_10px_rgba(124,108,242,0.18)]
-                "
-              />
-
-              <span className="text-[7px] font-semibold tracking-[0.17em] text-soft-violet/50">
-                {node.label}
-              </span>
-            </motion.div>
-          ))}
-        </>
-      )}
-    </AnimatePresence>
-  </motion.div>
 </motion.div>
   </div>
 </Container>

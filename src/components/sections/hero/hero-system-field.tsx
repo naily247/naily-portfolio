@@ -34,6 +34,7 @@ type HeroSystemFieldProps = {
   activeLayer: HeroSystemLayer;
   pointer?: HeroSystemPointer;
   reduceMotion?: boolean | null;
+  awakening?: boolean;
   className?: string;
 };
 
@@ -1923,6 +1924,131 @@ function SceneRig({
   );
 }
 
+function ArchitectureAwakening({
+  active,
+  reduceMotion,
+}: {
+  active: boolean;
+  reduceMotion?: boolean | null;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const previousActiveRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+
+  const route = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3(
+        [
+          [-2.8, 1.25, 0.82],
+          [-1.45, 0.72, 0.62],
+          [-0.05, 0.2, 0.18],
+          [1.25, -0.2, -0.32],
+          [2.7, -1.1, -0.9],
+        ].map(
+          ([x, y, z]) => new THREE.Vector3(x, y, z),
+        ),
+        false,
+        'catmullrom',
+        0.45,
+      ),
+    [],
+  );
+
+  useFrame((state, delta) => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    const justActivated =
+      active && !previousActiveRef.current;
+
+    previousActiveRef.current = active;
+
+    if (justActivated) {
+      startedAtRef.current = state.clock.elapsedTime;
+    }
+
+    const elapsed =
+      startedAtRef.current === null
+        ? Infinity
+        : state.clock.elapsedTime - startedAtRef.current;
+
+    const duration = 1.55;
+    const progress = THREE.MathUtils.clamp(
+      elapsed / duration,
+      0,
+      1,
+    );
+
+    const visible =
+      active &&
+      !reduceMotion &&
+      elapsed >= 0 &&
+      elapsed < duration;
+
+    const targetOpacity = visible
+      ? Math.sin(progress * Math.PI) * 0.9
+      : 0;
+
+    const core = group.children[0] as THREE.Mesh;
+    const halo = group.children[1] as THREE.Mesh;
+
+    const coreMaterial =
+      core.material as THREE.MeshBasicMaterial;
+
+    const haloMaterial =
+      halo.material as THREE.MeshBasicMaterial;
+
+    coreMaterial.opacity = damp(
+      coreMaterial.opacity,
+      targetOpacity,
+      12,
+      delta,
+    );
+
+    haloMaterial.opacity = damp(
+      haloMaterial.opacity,
+      targetOpacity * 0.16,
+      12,
+      delta,
+    );
+
+    if (visible) {
+      group.position.copy(route.getPointAt(progress));
+
+      const scale =
+        1 + Math.sin(progress * Math.PI) * 0.65;
+
+      group.scale.setScalar(scale);
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      <mesh>
+        <circleGeometry args={[0.065, 32]} />
+        <meshBasicMaterial
+          color={COLORS.violet}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      <mesh>
+        <circleGeometry args={[0.25, 40]} />
+        <meshBasicMaterial
+          color={COLORS.violetSoft}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 /* ==================================================================
    SCENE
    ================================================================== */
@@ -1931,10 +2057,12 @@ function HeroSystemScene({
   activeLayer,
   pointer,
   reduceMotion,
+  awakening,
 }: {
   activeLayer: HeroSystemLayer;
   pointer: HeroSystemPointer;
   reduceMotion?: boolean | null;
+  awakening: boolean;
 }) {
   return (
     <>
@@ -1963,6 +2091,11 @@ function HeroSystemScene({
           activeLayer={activeLayer}
           reduceMotion={reduceMotion}
         />
+
+        <ArchitectureAwakening
+  active={awakening}
+  reduceMotion={reduceMotion}
+/>
       </SceneRig>
     </>
   );
@@ -1980,6 +2113,7 @@ export function HeroSystemField({
     active: false,
   },
   reduceMotion,
+  awakening = false,
   className = '',
 }: HeroSystemFieldProps) {
   return (
@@ -2028,6 +2162,7 @@ export function HeroSystemField({
       >
         <HeroSystemScene
           activeLayer={activeLayer}
+          awakening={awakening}
           pointer={pointer}
           reduceMotion={reduceMotion}
         />
